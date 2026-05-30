@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyc.*
+.env
+credentials.json
+MINIO_LOCAL_CREDENTIALS.txt
+.venv/
+venv/
+data/
+logs/
