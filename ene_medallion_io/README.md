@@ -76,6 +76,17 @@ From the tabulation project root:
 ```powershell
 python path\to\tools\ene_medallion_io\05_download_tabulation_inputs.py --quarter T1_2026 --base-dir C:\Users\f.migone\Desktop\ENE_INDICATORS_TABULATIONS --dry-run
 python path\to\tools\ene_medallion_io\06_upload_indicator_outputs.py --quarter T1_2026 --base-dir C:\Users\f.migone\Desktop\ENE_INDICATORS_TABULATIONS --dry-run
+python path\to\tools\ene_medallion_io\05_download_tabulation_inputs.py --period annual --year 2025 --base-dir C:\Users\f.migone\Desktop\ENE_INDICATORS_TABULATIONS --dry-run
+python path\to\tools\ene_medallion_io\06_upload_indicator_outputs.py --period annual --year 2025 --base-dir C:\Users\f.migone\Desktop\ENE_INDICATORS_TABULATIONS --dry-run
+```
+
+Default local directories:
+
+```text
+data\inputs\quarterly\{quarter}
+data\inputs\annual\{year}
+outputs\quarterly\{quarter}
+outputs\annual\{year}
 ```
 
 `06_upload_indicator_outputs.py` excludes `Archive`, `Templates`, `graphs`,

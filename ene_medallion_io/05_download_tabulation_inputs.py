@@ -17,9 +17,9 @@ def main() -> None:
     if args.target_dir:
         target_dir = args.target_dir
     elif args.period == "annual":
-        target_dir = base_dir / "Bulletin_Trimestriel" / "Base" / "Base_brute" / "annual" / args.year
+        target_dir = base_dir / "data" / "inputs" / "annual" / args.year
     else:
-        target_dir = base_dir / "Bulletin_Trimestriel" / "Base" / "Base_brute"
+        target_dir = base_dir / "data" / "inputs" / "quarterly" / args.quarter
 
     client = connect_from_args(args)
     download_prefix(

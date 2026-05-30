@@ -342,6 +342,37 @@ def upload_file(
     return record
 
 
+def download_file(
+    client,
+    bucket: str,
+    key: str,
+    local_file: Path,
+    *,
+    dry_run: bool = False,
+    overwrite: bool = False,
+) -> dict[str, object] | None:
+    key = key.replace("\\", "/").strip("/")
+    if not head_exists(client, bucket, key):
+        print(f"skip missing s3://{bucket}/{key}")
+        return None
+
+    record = {
+        "bucket": bucket,
+        "key": key,
+        "target": str(local_file),
+    }
+    if dry_run:
+        print(f"DRY-RUN download s3://{bucket}/{key} -> {local_file}")
+        return record
+    if local_file.exists() and not overwrite:
+        print(f"skip existing {local_file}")
+        return record
+    local_file.parent.mkdir(parents=True, exist_ok=True)
+    client.download_file(bucket, key, str(local_file))
+    print(f"downloaded s3://{bucket}/{key} -> {local_file}")
+    return record
+
+
 def download_prefix(
     client,
     bucket: str,

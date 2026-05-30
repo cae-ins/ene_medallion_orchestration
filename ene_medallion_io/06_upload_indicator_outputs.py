@@ -27,9 +27,9 @@ def main() -> None:
     if args.results_dir:
         results_dir = args.results_dir
     elif args.period == "annual":
-        results_dir = None
+        results_dir = base_dir / "outputs" / "annual" / args.year
     else:
-        results_dir = base_dir / "Bulletin_Trimestriel" / "Resultats_Tab"
+        results_dir = base_dir / "outputs" / "quarterly" / args.quarter
 
     client = connect_from_args(args)
     ensure_ene_period_layout(
@@ -39,13 +39,6 @@ def main() -> None:
         year=args.year,
         dry_run=args.dry_run,
     )
-
-    if args.period == "annual" and results_dir is None:
-        print(
-            "skip annual indicator upload: pass --results-dir with the standardized "
-            "annual outputs directory."
-        )
-        return
 
     ignored_dirs = set()
     if not args.include_archives:

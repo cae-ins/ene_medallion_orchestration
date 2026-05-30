@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from ene_minio import add_common_args, connect_from_args, ensure_ene_layout, upload_directory
+from ene_minio import add_common_args, connect_from_args, ensure_ene_layout, upload_directory, upload_file
 
 
 def upload_if_present(client, path: Path, bucket: str, prefix: str, args) -> None:
@@ -59,6 +59,13 @@ def upload_standard_bronze(client, base_dir: Path, args) -> None:
     )
 
 
+def first_existing(*paths: Path) -> Path:
+    for path in paths:
+        if path.exists():
+            return path
+    return paths[0]
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Upload ENE apurement outputs to bronze/silver.")
     add_common_args(parser)
@@ -99,6 +106,28 @@ def main() -> None:
         "silver",
         f"enem/{args.quarter}/individu",
         args,
+    )
+    upload_file(
+        client,
+        first_existing(
+            base_dir / "dataout" / "menage" / "menage.dta",
+            base_dir / "dataout" / "menage" / "qx_eec_vf.dta",
+        ),
+        "silver",
+        f"enem/{args.quarter}/menage/menage_{args.quarter}.dta",
+        dry_run=args.dry_run,
+        overwrite=args.overwrite,
+    )
+    upload_file(
+        client,
+        first_existing(
+            base_dir / "dataout" / "individu" / "membres.dta",
+            base_dir / "dataout" / "individu" / "individu.dta",
+        ),
+        "silver",
+        f"enem/{args.quarter}/individu/individu_{args.quarter}.dta",
+        dry_run=args.dry_run,
+        overwrite=args.overwrite,
     )
     if not args.skip_quality_reports:
         quality_dir = args.quality_dir or base_dir / "document"

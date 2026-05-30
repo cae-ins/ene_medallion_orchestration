@@ -68,6 +68,16 @@ True raw codification or "autres a preciser" files must be passed explicitly
 to `00_upload_raw_to_staging.py` with `--codification-dir` or
 `--other-raw-file`.
 
+The two merged apurement bases are also published with stable silver names:
+
+```text
+silver/enem/{quarter}/menage/menage_{quarter}.dta
+silver/enem/{quarter}/individu/individu_{quarter}.dta
+```
+
+`03_download_weights_inputs.py` downloads only these two stable objects into
+`data\02_cleaned`, rather than copying every technical silver artifact.
+
 From the weights project root:
 
 ```powershell
@@ -102,13 +112,21 @@ template files, copies, tests, and `2024` files by default. Use
 `--include-archives`, `--include-templates`, `--include-graphs`, or
 `--include-drafts` only when those files are part of the intended delivery.
 
-For annual tabulations, `05_download_tabulation_inputs.py` downloads from
-`gold/enem/annual/{year}/base_indicateurs/`. If no `--target-dir` is supplied,
-it writes into `Bulletin_Trimestriel\Base\Base_brute\annual\{year}` so annual
-inputs do not overwrite quarterly bases.
+For tabulations, `05_download_tabulation_inputs.py` writes into the standardized
+runtime folders of `ENE_INDICATORS_TABULATIONS`:
 
-For annual indicators, `--results-dir` is required because the annual
-publication folder is not yet standardized in the tabulation repository. Without
-it, the script only ensures the MinIO prefixes and skips the upload.
+```text
+data\inputs\quarterly\{quarter}
+data\inputs\annual\{year}
+```
+
+`06_upload_indicator_outputs.py` publishes from:
+
+```text
+outputs\quarterly\{quarter}
+outputs\annual\{year}
+```
+
+`--target-dir` and `--results-dir` remain available for explicit overrides.
 
 Use `--overwrite` only when you intentionally want to replace existing objects.
