@@ -1,5 +1,11 @@
 # ENE medallion I/O
 
+## Documentation d’architecture
+
+Le flux complet entre les dépôts métier, les couches MinIO, les traitements
+trimestriels et la combinaison annuelle de précision est décrit dans
+[`docs/SCHEMA_ORCHESTRATION_PRECISION_ENE.md`](docs/SCHEMA_ORCHESTRATION_PRECISION_ENE.md).
+
 Python scripts for moving ENE files between local Stata/R projects and the
 MinIO medallion buckets.
 
