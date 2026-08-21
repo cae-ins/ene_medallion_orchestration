@@ -4,6 +4,7 @@ import argparse
 from pathlib import Path
 
 from ene_minio import (
+    GOLD_INDICATOR_BASE,
     add_common_args,
     connect_from_args,
     ensure_ene_period_layout,
@@ -15,16 +16,20 @@ from ene_minio import (
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Upload ENE prepared per-quarter work base(s) to gold/base_indicateurs "
-        "(partition immuable par trimestre, versionnable via --asof)."
+        description=(
+            f"Upload ENE prepared per-quarter work base(s) to gold/{GOLD_INDICATOR_BASE} "
+            "(partition immuable par trimestre, versionnable via --asof)."
+        )
     )
     add_common_args(parser)
     parser.add_argument("--base-dir", type=Path, default=Path.cwd())
     parser.add_argument(
         "--asof",
         default=None,
-        help="Sous-dossier de version (ex. 2026-06-26) -> base_indicateurs/asof=<asof>/. "
-        "Sans --asof : ecriture directe (immuable, protegee par --overwrite).",
+        help=(
+            f"Sous-dossier de version (ex. 2026-06-26) -> {GOLD_INDICATOR_BASE}/asof=<asof>/. "
+            "Sans --asof : ecriture directe (immuable, protegee par --overwrite)."
+        ),
     )
     args = parser.parse_args()
 
@@ -47,7 +52,7 @@ def main() -> None:
     )
 
     suffix = f"/asof={args.asof}" if args.asof else ""
-    dest = f"{root}/base_indicateurs{suffix}"
+    dest = f"{root}/{GOLD_INDICATOR_BASE}{suffix}"
 
     upload_directory(
         client,

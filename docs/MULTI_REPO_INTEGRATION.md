@@ -46,9 +46,9 @@ download: silver/enem/{quarter}/menage/
 download: silver/enem/{quarter}/individu/
 download: staging/enem/{quarter}/brutes/denombrement/
 upload:   silver/enem/{quarter}/poids/
-upload:   gold/enem/{quarter}/base_indicateurs/
+upload:   gold/enem/{quarter}/base_ponderee/
 upload:   silver/enem/annual/{year}/poids/
-upload:   gold/enem/annual/{year}/base_indicateurs/
+upload:   gold/enem/annual/{year}/base_ponderee/
 ```
 
 Scripts concernes:
@@ -75,9 +75,11 @@ Important:
 Responsabilite medallion:
 
 ```text
-download: gold/enem/{quarter}/base_indicateurs/
+download: gold/enem/{quarter}/base_ponderee/
+upload:   gold/enem/{quarter}/base_indicateurs/
 upload:   gold/enem/{quarter}/indicateurs/
-download: gold/enem/annual/{year}/base_indicateurs/
+download: gold/enem/annual/{year}/base_ponderee/
+upload:   gold/enem/annual/{year}/base_indicateurs/
 upload:   gold/enem/annual/{year}/indicateurs/
 ```
 
@@ -86,6 +88,38 @@ Scripts concernes:
 ```text
 05_download_tabulation_inputs.py
 06_upload_indicator_outputs.py
+07_upload_quarter_bases.py
+```
+
+### ENE_PRECISION_ESTIMATION
+
+Role metier:
+
+- calcul des erreurs-types et coefficients de variation;
+- production des intervalles de confiance;
+- calcul des effets de plan lorsque le plan complet est disponible;
+- attribution des drapeaux de qualite statistique.
+
+Responsabilite medallion:
+
+```text
+download: gold/enem/{quarter}/base_indicateurs/
+upload:   gold/enem/{quarter}/precision/
+download: gold/enem/annual/{year}/base_indicateurs/
+upload:   gold/enem/annual/{year}/precision/
+```
+
+Regle de diffusion: les precisions trimestrielles excluent tous les domaines
+regionaux. Les precisions annuelles ajoutent region et ses croisements. Le plan
+trimestriel est lu depuis `calibration_design`; le calcul annuel recharge les
+quatre plans calibres trimestriels, utilise `pmencor_ind_annuel` pour le point et
+combine les covariances Berger-Priam des PSU communs selon la rotation 2-2.
+
+Scripts concernes:
+
+```text
+08_download_precision_inputs.py
+09_upload_precision_outputs.py
 ```
 
 ## Regle Git

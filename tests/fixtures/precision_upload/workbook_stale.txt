@@ -1,0 +1,1 @@
+stale synthetic workbook fixture: must not be uploaded

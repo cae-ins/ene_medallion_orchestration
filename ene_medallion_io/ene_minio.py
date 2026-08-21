@@ -13,10 +13,35 @@ from botocore.client import Config
 from botocore.exceptions import ClientError
 
 
-DEFAULT_CREDENTIALS_FILE = Path(r"C:\tmp\minio-server\MINIO_LOCAL_CREDENTIALS.txt")
+LEGACY_CREDENTIALS_FILE = Path(r"C:\tmp\minio-server\MINIO_LOCAL_CREDENTIALS.txt")
+DEFAULT_SECRETS_FILENAME = "ENE_SURVEY_WEIGHTS_credentials.json"
+
+
+def discover_credentials_file() -> Path:
+    explicit_file = os.getenv("ENE_CREDENTIALS_FILE")
+    if explicit_file:
+        return Path(explicit_file).expanduser()
+
+    default_secrets_dir = Path(__file__).resolve().parents[2] / "ENE_SECRETS"
+    secrets_dir = Path(os.getenv("ENE_SECRETS_DIR", str(default_secrets_dir))).expanduser()
+    secrets_file = secrets_dir / DEFAULT_SECRETS_FILENAME
+    if secrets_file.exists():
+        return secrets_file
+
+    return LEGACY_CREDENTIALS_FILE
+
+
+DEFAULT_CREDENTIALS_FILE = discover_credentials_file()
 DEFAULT_ENDPOINT = "http://127.0.0.1:9000"
 DEFAULT_QUARTER = "T1_2026"
 DEFAULT_YEAR = "2025"
+
+# Stable Gold product names. Keeping them here prevents business pipelines
+# from silently publishing different products under the same prefix.
+GOLD_WEIGHTED_BASE = "base_ponderee"
+GOLD_INDICATOR_BASE = "base_indicateurs"
+GOLD_INDICATORS = "indicateurs"
+GOLD_PRECISION = "precision"
 
 
 @dataclass(frozen=True)
@@ -187,8 +212,10 @@ def ensure_ene_layout(client, quarter: str, dry_run: bool = False) -> None:
             f"enem/{quarter}/poids/",
         ],
         "gold": [
-            f"enem/{quarter}/base_indicateurs/",
-            f"enem/{quarter}/indicateurs/",
+            f"enem/{quarter}/{GOLD_WEIGHTED_BASE}/",
+            f"enem/{quarter}/{GOLD_INDICATOR_BASE}/",
+            f"enem/{quarter}/{GOLD_INDICATORS}/",
+            f"enem/{quarter}/{GOLD_PRECISION}/",
         ],
     }
     for bucket, prefixes in layout.items():
@@ -231,8 +258,10 @@ def ensure_ene_period_layout(
             f"{root}/poids/",
         ],
         "gold": [
-            f"{root}/base_indicateurs/",
-            f"{root}/indicateurs/",
+            f"{root}/{GOLD_WEIGHTED_BASE}/",
+            f"{root}/{GOLD_INDICATOR_BASE}/",
+            f"{root}/{GOLD_INDICATORS}/",
+            f"{root}/{GOLD_PRECISION}/",
         ],
     }
     for bucket, prefixes in layout.items():

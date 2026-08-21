@@ -3,11 +3,19 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from ene_minio import add_common_args, connect_from_args, download_prefix, period_prefix
+from ene_minio import (
+    GOLD_WEIGHTED_BASE,
+    add_common_args,
+    connect_from_args,
+    download_prefix,
+    period_prefix,
+)
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Download ENE gold indicator-ready bases for tabulations.")
+    parser = argparse.ArgumentParser(
+        description="Download ENE final weighted survey bases for indicator preparation."
+    )
     add_common_args(parser)
     parser.add_argument("--base-dir", type=Path, default=Path.cwd())
     parser.add_argument("--target-dir", type=Path, default=None)
@@ -25,7 +33,7 @@ def main() -> None:
     download_prefix(
         client,
         "gold",
-        f"{period_prefix(args.period, quarter=args.quarter, year=args.year)}/base_indicateurs",
+        f"{period_prefix(args.period, quarter=args.quarter, year=args.year)}/{GOLD_WEIGHTED_BASE}",
         target_dir,
         dry_run=args.dry_run,
         overwrite=args.overwrite,

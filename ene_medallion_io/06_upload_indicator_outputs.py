@@ -4,6 +4,7 @@ import argparse
 from pathlib import Path
 
 from ene_minio import (
+    GOLD_INDICATORS,
     add_common_args,
     connect_from_args,
     ensure_ene_period_layout,
@@ -57,7 +58,7 @@ def main() -> None:
         client,
         results_dir,
         "gold",
-        f"{period_prefix(args.period, quarter=args.quarter, year=args.year)}/indicateurs",
+        f"{period_prefix(args.period, quarter=args.quarter, year=args.year)}/{GOLD_INDICATORS}",
         dry_run=args.dry_run,
         overwrite=args.overwrite,
         ignore_dir_names=ignored_dirs,

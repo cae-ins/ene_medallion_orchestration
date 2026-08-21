@@ -19,13 +19,27 @@ silver/enem/T1_2026/menage/
 silver/enem/T1_2026/individu/
 silver/enem/T1_2026/poids/
 
+gold/enem/T1_2026/base_ponderee/
 gold/enem/T1_2026/base_indicateurs/
 gold/enem/T1_2026/indicateurs/
+gold/enem/T1_2026/precision/
 
 silver/enem/annual/2025/poids/
+gold/enem/annual/2025/base_ponderee/
 gold/enem/annual/2025/base_indicateurs/
 gold/enem/annual/2025/indicateurs/
+gold/enem/annual/2025/precision/
 ```
+
+Gold prefixes have distinct owners:
+
+- `ENE_SURVEY_WEIGHTS` publishes final weighted survey files to
+  `base_ponderee/`;
+- `ENE_INDICATORS_TABULATIONS` publishes its prepared analysis base to
+  `base_indicateurs/` and official tabulations to `indicateurs/`;
+- `ENE_PRECISION_ESTIMATION` reads `base_indicateurs/` and publishes
+  standard errors, CVs, confidence intervals and design effects to
+  `precision/`.
 
 ## Credentials
 
@@ -39,7 +53,15 @@ $env:MINIO_ACCESS_KEY = "..."
 $env:MINIO_SECRET_KEY = "..."
 ```
 
-or from the local test file:
+By default, the module also discovers the sibling secrets file without printing
+its contents:
+
+```text
+../ENE_SECRETS/ENE_SURVEY_WEIGHTS_credentials.json
+```
+
+Set `ENE_CREDENTIALS_FILE` to select a specific file or `ENE_SECRETS_DIR` to
+select another secrets directory. The legacy fallback remains:
 
 ```text
 C:\tmp\minio-server\MINIO_LOCAL_CREDENTIALS.txt
@@ -86,13 +108,33 @@ python path\to\tools\ene_medallion_io\04_upload_weights_outputs.py --quarter T1_
 python path\to\tools\ene_medallion_io\04_upload_weights_outputs.py --period annual --year 2025 --base-dir C:\Users\f.migone\Desktop\ENE_SURVEY_WEIGHTS --dry-run
 ```
 
-For annual weights, the script looks for `LFS_WEIGHTS_{year}.dta` under
-`data\04_weights\{year}` or `data\04_weights\{year}\calibrated_weights` and
-uploads only that annual LFS file:
+For a quarterly period, Gold receives only the two stable weighted survey
+products expected by the Indicators pipeline:
+
+```text
+gold/enem/{quarter}/base_ponderee/individu_{quarter}_CAL.dta
+gold/enem/{quarter}/base_ponderee/menage_{quarter}.dta
+```
+
+Diagnostics and intermediate weight files remain under `silver/.../poids/`.
+For quarterly runs, the selected calibrated ReGenesees image is also published
+as a reusable design artifact:
+
+```text
+silver/enem/{quarter}/poids/calibration_design/{strategy}/LFS_CALIBRATION_*_IMAGE.RData
+```
+
+The default strategy is `180X_1D`; use `--calibration-strategy` when another
+calibration is the official one for the period.
+
+For annual weights, the script looks for `LFS_WEIGHTS_{year}.parquet` and the
+compatibility file `LFS_WEIGHTS_{year}.dta` under `data\04_weights\{year}` or
+`data\04_weights\{year}\calibrated_weights`. Every available format is uploaded,
+with Parquet treated as the primary product:
 
 ```text
 silver/enem/annual/{year}/poids/
-gold/enem/annual/{year}/base_indicateurs/
+gold/enem/annual/{year}/base_ponderee/
 ```
 
 Household weight helper files under `household_weights\` are not uploaded as
@@ -105,6 +147,7 @@ python path\to\tools\ene_medallion_io\05_download_tabulation_inputs.py --quarter
 python path\to\tools\ene_medallion_io\06_upload_indicator_outputs.py --quarter T1_2026 --base-dir C:\Users\f.migone\Desktop\ENE_INDICATORS_TABULATIONS --dry-run
 python path\to\tools\ene_medallion_io\05_download_tabulation_inputs.py --period annual --year 2025 --base-dir C:\Users\f.migone\Desktop\ENE_INDICATORS_TABULATIONS --dry-run
 python path\to\tools\ene_medallion_io\06_upload_indicator_outputs.py --period annual --year 2025 --results-dir C:\path\to\annual\outputs --base-dir C:\Users\f.migone\Desktop\ENE_INDICATORS_TABULATIONS --dry-run
+python path\to\tools\ene_medallion_io\07_upload_quarter_bases.py --quarter T1_2026 --base-dir C:\Users\f.migone\Desktop\ENE_INDICATORS_TABULATIONS --dry-run
 ```
 
 `06_upload_indicator_outputs.py` excludes `Archive`, `Templates`, `graphs`,
@@ -112,8 +155,9 @@ template files, copies, tests, and `2024` files by default. Use
 `--include-archives`, `--include-templates`, `--include-graphs`, or
 `--include-drafts` only when those files are part of the intended delivery.
 
-For tabulations, `05_download_tabulation_inputs.py` writes into the standardized
-runtime folders of `ENE_INDICATORS_TABULATIONS`:
+For indicator preparation, `05_download_tabulation_inputs.py` reads the final
+weighted survey files from `gold/.../base_ponderee/` and writes them into the
+standardized runtime folders of `ENE_INDICATORS_TABULATIONS`:
 
 ```text
 data\inputs\quarterly\{quarter}
@@ -128,5 +172,27 @@ outputs\annual\{year}
 ```
 
 `--target-dir` and `--results-dir` remain available for explicit overrides.
+
+From the precision project:
+
+```powershell
+python path\to\tools\ene_medallion_io\08_download_precision_inputs.py --quarter T1_2026 --base-dir C:\Users\f.migone\Desktop\ENE_PRECISION_ESTIMATION --dry-run
+python path\to\tools\ene_medallion_io\09_upload_precision_outputs.py --quarter T1_2026 --base-dir C:\Users\f.migone\Desktop\ENE_PRECISION_ESTIMATION --dry-run
+python path\to\tools\ene_medallion_io\08_download_precision_inputs.py --period annual --year 2025 --base-dir C:\Users\f.migone\Desktop\ENE_PRECISION_ESTIMATION --dry-run
+python path\to\tools\ene_medallion_io\09_upload_precision_outputs.py --period annual --year 2025 --base-dir C:\Users\f.migone\Desktop\ENE_PRECISION_ESTIMATION --dry-run
+```
+
+The download reads `gold/.../base_indicateurs/`. For quarterly periods it also
+retrieves the selected calibrated design from
+`silver/.../poids/calibration_design/{strategy}/`. For annual periods it
+retrieves the four quarterly calibrated designs T1--T4: the precision project
+combines their Taylor variances and Berger--Priam covariances under the PSU
+rotation scheme. Uploads go to `gold/.../precision/`. Both commands accept
+`--asof` for an explicit immutable Gold version.
+
+The precision upload is manifest-driven: only files declared by
+`manifest_<period>.json` are published. This prevents an older canonical Excel
+workbook from being uploaded when Windows forced the R pipeline to write a
+timestamped replacement.
 
 Use `--overwrite` only when you intentionally want to replace existing objects.
