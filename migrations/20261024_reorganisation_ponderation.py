@@ -32,10 +32,16 @@ MISPLACED = (
 )
 
 
+# work/quarterly/T3_2025/Traite_25T3.dta is a provisional imputed version (written by
+# scripts/stata/corrections/completer_branche_T3_2025.do), not the product: use legacy.
+LEGACY_FIRST = {"T3_2025"}
+
+
 def traite_source(tabulation_data: Path, quarter: str) -> Path | None:
     name = f"Traite_{short_label(quarter)}.dta"
-    for candidate in (tabulation_data / "work" / "quarterly" / quarter / name,
-                      tabulation_data / "legacy" / "bulletin_trimestriel" / "Temp" / name):
+    work = tabulation_data / "work" / "quarterly" / quarter / name
+    legacy = tabulation_data / "legacy" / "bulletin_trimestriel" / "Temp" / name
+    for candidate in ((legacy, work) if quarter in LEGACY_FIRST else (work, legacy)):
         if candidate.is_file():
             return candidate
     return None
