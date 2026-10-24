@@ -14,22 +14,19 @@ from botocore.client import Config
 from botocore.exceptions import ClientError
 
 
-LEGACY_CREDENTIALS_FILE = Path(r"C:\tmp\minio-server\MINIO_LOCAL_CREDENTIALS.txt")
 DEFAULT_SECRETS_FILENAME = "ENE_SURVEY_WEIGHTS_credentials.json"
 
 
 def discover_credentials_file() -> Path:
+    """ENE_CREDENTIALS_FILE, else <ENE_SECRETS_DIR or ../ENE_SECRETS>/ENE_SURVEY_WEIGHTS_credentials.json.
+    No path of a given computer: environment variables and .env take precedence anyway."""
     explicit_file = os.getenv("ENE_CREDENTIALS_FILE")
     if explicit_file:
         return Path(explicit_file).expanduser()
 
     default_secrets_dir = Path(__file__).resolve().parents[2] / "ENE_SECRETS"
     secrets_dir = Path(os.getenv("ENE_SECRETS_DIR", str(default_secrets_dir))).expanduser()
-    secrets_file = secrets_dir / DEFAULT_SECRETS_FILENAME
-    if secrets_file.exists():
-        return secrets_file
-
-    return LEGACY_CREDENTIALS_FILE
+    return secrets_dir / DEFAULT_SECRETS_FILENAME
 
 
 DEFAULT_CREDENTIALS_FILE = discover_credentials_file()

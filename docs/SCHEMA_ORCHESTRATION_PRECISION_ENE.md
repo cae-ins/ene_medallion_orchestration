@@ -304,7 +304,7 @@ chemin vers `ene_medallion_io`.
 ```powershell
 python path\to\ene_medallion_io\04_upload_weights_outputs.py `
   --quarter T1_2026 `
-  --base-dir C:\Users\f.migone\Desktop\ENE_SURVEY_WEIGHTS `
+  --base-dir ..\ENE_SURVEY_WEIGHTS `
   --calibration-strategy 180X_1D `
   --dry-run
 ```
@@ -316,11 +316,11 @@ Après examen du plan affiché, relancer sans `--dry-run`.
 ```powershell
 python path\to\ene_medallion_io\05_download_tabulation_inputs.py `
   --quarter T1_2026 `
-  --base-dir C:\Users\f.migone\Desktop\ENE_INDICATORS_TABULATIONS
+  --base-dir ..\ENE_INDICATORS_TABULATIONS
 
 python path\to\ene_medallion_io\07_upload_quarter_bases.py `
   --quarter T1_2026 `
-  --base-dir C:\Users\f.migone\Desktop\ENE_INDICATORS_TABULATIONS `
+  --base-dir ..\ENE_INDICATORS_TABULATIONS `
   --asof 2026-08-21 `
   --dry-run
 ```
@@ -332,7 +332,7 @@ Le calcul Stata/R de la base finale a lieu entre ces deux commandes.
 ```powershell
 python path\to\ene_medallion_io\08_download_precision_inputs.py `
   --quarter T1_2026 `
-  --base-dir C:\Users\f.migone\Desktop\ENE_PRECISION_ESTIMATION `
+  --base-dir ..\ENE_PRECISION_ESTIMATION `
   --calibration-strategy 180X_1D `
   --asof 2026-08-21
 ```
@@ -345,7 +345,7 @@ python path\to\ene_medallion_io\08_download_precision_inputs.py `
 
 python path\to\ene_medallion_io\09_upload_precision_outputs.py `
   --quarter T1_2026 `
-  --base-dir C:\Users\f.migone\Desktop\ENE_PRECISION_ESTIMATION `
+  --base-dir ..\ENE_PRECISION_ESTIMATION `
   --asof 2026-08-21 `
   --dry-run
 ```
@@ -361,7 +361,7 @@ manifeste, en retirant `--dry-run`.
 python path\to\ene_medallion_io\04_upload_weights_outputs.py `
   --period annual `
   --year 2025 `
-  --base-dir C:\Users\f.migone\Desktop\ENE_SURVEY_WEIGHTS `
+  --base-dir ..\ENE_SURVEY_WEIGHTS `
   --dry-run
 ```
 
@@ -371,12 +371,12 @@ python path\to\ene_medallion_io\04_upload_weights_outputs.py `
 python path\to\ene_medallion_io\05_download_tabulation_inputs.py `
   --period annual `
   --year 2025 `
-  --base-dir C:\Users\f.migone\Desktop\ENE_INDICATORS_TABULATIONS
+  --base-dir ..\ENE_INDICATORS_TABULATIONS
 
 python path\to\ene_medallion_io\07_upload_quarter_bases.py `
   --period annual `
   --year 2025 `
-  --base-dir C:\Users\f.migone\Desktop\ENE_INDICATORS_TABULATIONS `
+  --base-dir ..\ENE_INDICATORS_TABULATIONS `
   --asof 2026-08-21 `
   --dry-run
 ```
@@ -387,7 +387,7 @@ python path\to\ene_medallion_io\07_upload_quarter_bases.py `
 python path\to\ene_medallion_io\08_download_precision_inputs.py `
   --period annual `
   --year 2025 `
-  --base-dir C:\Users\f.migone\Desktop\ENE_PRECISION_ESTIMATION `
+  --base-dir ..\ENE_PRECISION_ESTIMATION `
   --calibration-strategy 180X_1D `
   --asof 2026-08-21
 ```
@@ -401,7 +401,7 @@ python path\to\ene_medallion_io\08_download_precision_inputs.py `
 python path\to\ene_medallion_io\09_upload_precision_outputs.py `
   --period annual `
   --year 2025 `
-  --base-dir C:\Users\f.migone\Desktop\ENE_PRECISION_ESTIMATION `
+  --base-dir ..\ENE_PRECISION_ESTIMATION `
   --asof 2026-08-21 `
   --dry-run
 ```

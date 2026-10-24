@@ -80,6 +80,8 @@ def main(project_root: Path, commands: dict[str, Command], description: str, arg
 
     load_env_files(project_root)
     add_minio_host_to_no_proxy()
+    # Accented file names must not crash the scripts when their output is redirected (Windows).
+    os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 
     command = [sys.executable, str(IO_DIR / spec.script), "--base-dir", str(project_root)]
     quarter = args.quarter or os.environ.get("ENE_QUARTER")
