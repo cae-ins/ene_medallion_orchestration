@@ -15,6 +15,23 @@ from ene_minio import (
 )
 
 
+# Data contract of silver/enem/<T>/poids/: the published products of a quarter,
+# relative to data/04_weights/<T>/. Anything else in the local folder (tests,
+# exploratory files) is never published.
+QUARTERLY_WEIGHT_PRODUCTS = (
+    "base_weights/base_weights_{label}.dta",
+    "base_weights/inconsistent_rows_{label}.dta",
+    "base_weights/individu_{label}.dta",
+    "base_weights/SR_individu_{label}.dta",
+    "base_weights/menage_{label}.dta",
+    "base_weights/probabilities_gt1_{label}.dta",
+    "base_weights/nr_modele_*_{label}.csv",
+    "base_weights/nr_comparaison_*_{label}.csv",
+    "calibrated_weights/individu_{label}_CAL.dta",
+    "household_weights/menage_weights_*_{label}.dta",
+)
+
+
 def annual_lfs_weight_files(weights_dir: Path, year: str) -> list[Path]:
     """Return the Parquet product first, followed by the DTA compatibility file."""
     annual_files: list[Path] = []
@@ -123,6 +140,16 @@ def main() -> None:
                 dry_run=args.dry_run,
                 overwrite=args.overwrite,
             )
+        # Quality report and manifest (method, quarters, checksums) for traceability.
+        for name in (f"LFS_WEIGHTS_{args.year}_quality.csv", f"LFS_WEIGHTS_{args.year}_manifest.json"):
+            upload_file(
+                client,
+                weights_dir / name,
+                "silver",
+                f"{root}/poids/{name}",
+                dry_run=args.dry_run,
+                overwrite=args.overwrite,
+            )
         return
 
     upload_directory(
@@ -132,6 +159,7 @@ def main() -> None:
         f"{root}/poids",
         dry_run=args.dry_run,
         overwrite=args.overwrite,
+        include_globs=[pattern.format(label=label) for pattern in QUARTERLY_WEIGHT_PRODUCTS],
     )
 
     calibration_images = quarterly_calibration_images(

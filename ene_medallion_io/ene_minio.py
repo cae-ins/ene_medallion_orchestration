@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import json
 import os
 from dataclasses import dataclass
@@ -281,7 +282,10 @@ def upload_directory(
     manifest: bool = True,
     ignore_dir_names: set[str] | None = None,
     ignore_name_contains: set[str] | None = None,
+    include_globs: Iterable[str] | None = None,
 ) -> list[dict[str, object]]:
+    """Upload a directory. With include_globs, only the files whose path relative
+    to local_dir matches one of the patterns are published (data contract)."""
     local_dir = local_dir.resolve()
     if not local_dir.exists():
         print(f"skip missing local directory: {local_dir}")
@@ -294,6 +298,13 @@ def upload_directory(
             ignore_name_contains=ignore_name_contains,
         )
     )
+    if include_globs is not None:
+        patterns = list(include_globs)
+        files = [
+            path
+            for path in files
+            if any(fnmatch.fnmatchcase(path.relative_to(local_dir).as_posix(), pattern) for pattern in patterns)
+        ]
     for path in files:
         rel = path.relative_to(local_dir)
         key = object_key(prefix, rel)

@@ -78,21 +78,51 @@ True raw codification or "autres a preciser" files must be passed explicitly
 to `00_upload_raw_to_staging.py` with `--codification-dir` or
 `--other-raw-file`.
 
-From the weights project root:
+From the weights project root (wrappers in `scripts/medallion/`, which load `.env`
+and find this repository next to the weights repository or in
+`ENE_ORCHESTRATION_ROOT`):
 
 ```powershell
-python path\to\tools\ene_medallion_io\03_download_weights_inputs.py --quarter T1_2026 --base-dir C:\Users\f.migone\Desktop\ENE_SURVEY_WEIGHTS --dry-run
-python path\to\tools\ene_medallion_io\04_upload_weights_outputs.py --quarter T1_2026 --base-dir C:\Users\f.migone\Desktop\ENE_SURVEY_WEIGHTS --dry-run
+.\scripts\medallion\03_download_weights_inputs.ps1 -Quarter T1_2026 -DryRun
+.\scripts\medallion\10_upload_weights_inputs.ps1 -Quarter T1_2026 -DryRun
+.\scripts\medallion\04_upload_weights_outputs.ps1 -Quarter T1_2026 -DryRun
+.\scripts\medallion\04_upload_weights_outputs.ps1 -Period annual -Year 2025 -DryRun
 ```
 
-Quarterly Gold publication is restricted to
-`individu_{quarter}_CAL.dta` and `menage_{quarter}.dta` under
-`gold/.../base_ponderee/`. Technical weight artifacts stay in
-`silver/.../poids/`.
+### Weighting data contract (`weights_contract.py`)
+
+Every file read by the weighting code is listed in `weights_contract.py` with its
+MinIO location and its place under `<weights repo>/data/`. Downloading it on any
+computer gives the code everything it needs.
+
+| Input | MinIO | Owner |
+|---|---|---|
+| RGPH 2021 counts, rotation table, ANStat projections | `staging/enem/references/{rgph2021,organisation,population}/` | weighting (`10_upload_weights_inputs.py --references`) |
+| Enumeration and enumeration updates | `staging/enem/{quarter}/brutes/{denombrement,denombrement_update}/` | weighting (`10_upload_weights_inputs.py`) |
+| Population totals of the calibration | `staging/enem/{quarter}/population/` | weighting |
+| Cleaned household and individual files | `silver/enem/{quarter}/{menage,individu}/` | apurement |
+| Cohort weights (modelled non-response, from T1 2026) | `silver/enem/{cohort}/poids/base_weights/menage_{cohort}.dta` | weighting |
+| Cohort indicator bases (idem) | `gold/enem/{cohort}/base_indicateurs/Traite_{YYTq}.dta` | tabulation |
+
+The download takes the references, the cleaned files and the enumeration of
+every quarter since T2 2024 (interview-key mapping, re-interviewed cohorts) and
+the cohort inputs; it lists any missing object at the end.
+
+Quarterly publication (`04_upload_weights_outputs.py`) sends to
+`silver/.../poids/` only the products listed in `QUARTERLY_WEIGHT_PRODUCTS`
+(base, corrected and calibrated weights, household weights, non-response
+diagnostics): exploratory files left in the local folder are never published.
+Gold publication is restricted to `individu_{quarter}_CAL.dta` and
+`menage_{quarter}.dta` under `gold/.../base_ponderee/`, plus the calibration
+image under `silver/.../poids/calibration_design/{strategy}/`.
 
 Annual publication uploads `LFS_WEIGHTS_{year}.parquet` as the primary product
 and `LFS_WEIGHTS_{year}.dta` as its compatibility copy to both
-`silver/.../poids/` and `gold/.../base_ponderee/` when they are available.
+`silver/.../poids/` and `gold/.../base_ponderee/`, and the quality report and
+manifest to `silver/.../poids/`.
+
+One-off migrations are kept in `../migrations/` (for example
+`20261024_reorganisation_ponderation.py`).
 
 From the tabulation project root:
 
