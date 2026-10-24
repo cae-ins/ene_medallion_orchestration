@@ -12,6 +12,8 @@ from ene_minio import (
     period_prefix,
     upload_file,
 )
+from precision_contract import precision_outputs
+from precision_contract import results_dir as precision_results_dir
 
 
 def main() -> None:
@@ -54,14 +56,11 @@ def main() -> None:
             f"Precision manifest not found: {manifest_path}"
         )
     manifest = json.loads(manifest_path.read_text(encoding="utf-8-sig"))
-    declared_files = [manifest_path.name]
-    for field, value in manifest.items():
-        if not field.endswith("_file") or not isinstance(value, str) or not value:
-            continue
-        relative_path = Path(value)
-        if relative_path.is_absolute() or ".." in relative_path.parts:
-            raise ValueError(f"Unsafe file path in precision manifest: {value}")
-        declared_files.append(relative_path.as_posix())
+    # Only the products listed by precision_contract.PUBLISHED_MANIFEST_FIELDS are published.
+    declared_files = [
+        Path(item.local).relative_to(precision_results_dir(args.period, period_label)).as_posix()
+        for item in precision_outputs(args.period, period_label, manifest, args.asof)
+    ]
 
     missing_files = [
         relative for relative in declared_files
