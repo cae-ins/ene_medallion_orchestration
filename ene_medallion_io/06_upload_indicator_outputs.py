@@ -8,52 +8,39 @@ from ene_minio import (
     add_common_args,
     connect_from_args,
     ensure_ene_period_layout,
+    period_label,
     period_prefix,
     upload_directory,
 )
+from tabulation_contract import indicator_products
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Upload ENE tabulation outputs to gold indicators.")
+    parser = argparse.ArgumentParser(
+        description=(
+            "Upload the ENE tabulation products to gold/.../indicateurs/: only the files "
+            "listed by tabulation_contract.indicator_products (diagnostics, logs, drafts "
+            "and copies stay local)."
+        )
+    )
     add_common_args(parser)
     parser.add_argument("--base-dir", type=Path, default=Path.cwd())
     parser.add_argument("--results-dir", type=Path, default=None)
-    parser.add_argument("--include-archives", action="store_true")
-    parser.add_argument("--include-templates", action="store_true")
-    parser.add_argument("--include-graphs", action="store_true")
-    parser.add_argument("--include-drafts", action="store_true")
+    # Kept for compatibility with older launchers: publication follows the product list.
+    for obsolete in ("--include-archives", "--include-templates", "--include-graphs", "--include-drafts"):
+        parser.add_argument(obsolete, action="store_true", help="obsolète : sans effet")
     args = parser.parse_args()
+    if any((args.include_archives, args.include_templates, args.include_graphs, args.include_drafts)):
+        print("note : les options --include-* sont sans effet, seuls les produits listés sont publiés")
 
     base_dir = args.base_dir.resolve()
-    if args.results_dir:
-        results_dir = args.results_dir
-    elif args.period == "annual":
-        results_dir = base_dir / "outputs" / "annual" / args.year
-    else:
-        results_dir = base_dir / "outputs" / "quarterly" / args.quarter
-
-    client = connect_from_args(args)
-    ensure_ene_period_layout(
-        client,
-        args.period,
-        quarter=args.quarter,
-        year=args.year,
-        dry_run=args.dry_run,
+    label = period_label(args.period, quarter=args.quarter, year=args.year)
+    results_dir = args.results_dir or (
+        base_dir / "outputs" / ("annual" if args.period == "annual" else "quarterly") / label
     )
 
-    ignored_dirs = set()
-    if not args.include_archives:
-        ignored_dirs.add("Archive")
-    if not args.include_templates:
-        ignored_dirs.add("Templates")
-    if not args.include_graphs:
-        ignored_dirs.add("graphs")
-
-    ignored_name_fragments = set()
-    if not args.include_templates:
-        ignored_name_fragments.add("template")
-    if not args.include_drafts:
-        ignored_name_fragments.update({"copie", "copy", "test", "2024"})
+    client = connect_from_args(args)
+    ensure_ene_period_layout(client, args.period, quarter=args.quarter, year=args.year, dry_run=args.dry_run)
     upload_directory(
         client,
         results_dir,
@@ -61,8 +48,7 @@ def main() -> None:
         f"{period_prefix(args.period, quarter=args.quarter, year=args.year)}/{GOLD_INDICATORS}",
         dry_run=args.dry_run,
         overwrite=args.overwrite,
-        ignore_dir_names=ignored_dirs,
-        ignore_name_contains=ignored_name_fragments,
+        include_globs=indicator_products(args.period, label),
     )
 
 

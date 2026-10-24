@@ -12,13 +12,15 @@ from ene_minio import (
     period_prefix,
     upload_directory,
 )
+from tabulation_contract import base_products
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
         description=(
-            f"Upload ENE prepared per-quarter work base(s) to gold/{GOLD_INDICATOR_BASE} "
-            "(partition immuable par trimestre, versionnable via --asof)."
+            f"Upload the ENE work bases to gold/{GOLD_INDICATOR_BASE}: only the products of "
+            "tabulation_contract.base_products (Traite_<AATq>.dta and the pooled base for a "
+            "quarter; the annual precision base). Versionable with --asof."
         )
     )
     add_common_args(parser)
@@ -28,7 +30,7 @@ def main() -> None:
         default=None,
         help=(
             f"Sous-dossier de version (ex. 2026-06-26) -> {GOLD_INDICATOR_BASE}/asof=<asof>/. "
-            "Sans --asof : ecriture directe (immuable, protegee par --overwrite)."
+            "Sans --asof : écriture directe (immuable, protégée par --overwrite)."
         ),
     )
     args = parser.parse_args()
@@ -36,32 +38,19 @@ def main() -> None:
     base_dir = args.base_dir.resolve()
     label = period_label(args.period, quarter=args.quarter, year=args.year)
     root = period_prefix(args.period, quarter=args.quarter, year=args.year)
-
-    if args.period == "annual":
-        work_dir = base_dir / "data" / "work" / "annual" / label
-    else:
-        work_dir = base_dir / "data" / "work" / "quarterly" / label
+    work_dir = base_dir / "data" / "work" / ("annual" if args.period == "annual" else "quarterly") / label
 
     client = connect_from_args(args)
-    ensure_ene_period_layout(
-        client,
-        args.period,
-        quarter=args.quarter,
-        year=args.year,
-        dry_run=args.dry_run,
-    )
-
+    ensure_ene_period_layout(client, args.period, quarter=args.quarter, year=args.year, dry_run=args.dry_run)
     suffix = f"/asof={args.asof}" if args.asof else ""
-    dest = f"{root}/{GOLD_INDICATOR_BASE}{suffix}"
-
     upload_directory(
         client,
         work_dir,
         "gold",
-        dest,
+        f"{root}/{GOLD_INDICATOR_BASE}{suffix}",
         dry_run=args.dry_run,
         overwrite=args.overwrite,
-        ignore_name_contains={"copie", "copy", "temp", "tmp", "~"},
+        include_globs=base_products(args.period, label),
     )
 
 
