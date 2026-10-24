@@ -78,15 +78,15 @@ True raw codification or "autres a preciser" files must be passed explicitly
 to `00_upload_raw_to_staging.py` with `--codification-dir` or
 `--other-raw-file`.
 
-From the weights project root (wrappers in `scripts/medallion/`, which load `.env`
-and find this repository next to the weights repository or in
-`ENE_ORCHESTRATION_ROOT`):
+From the weights project root (launcher `scripts/medallion/medallion.py`, which
+loads `.env` and finds this repository next to the weights repository or in
+`ENE_ORCHESTRATION_ROOT`; Windows and Linux):
 
-```powershell
-.\scripts\medallion\03_download_weights_inputs.ps1 -Quarter T1_2026 -DryRun
-.\scripts\medallion\10_upload_weights_inputs.ps1 -Quarter T1_2026 -DryRun
-.\scripts\medallion\04_upload_weights_outputs.ps1 -Quarter T1_2026 -DryRun
-.\scripts\medallion\04_upload_weights_outputs.ps1 -Period annual -Year 2025 -DryRun
+```bash
+python scripts/medallion/medallion.py download --quarter T1_2026 --dry-run
+python scripts/medallion/medallion.py upload-inputs --quarter T1_2026 --dry-run
+python scripts/medallion/medallion.py upload-outputs --quarter T1_2026 --dry-run
+python scripts/medallion/medallion.py upload-outputs --period annual --year 2025 --dry-run
 ```
 
 ### Weighting data contract (`weights_contract.py`)
