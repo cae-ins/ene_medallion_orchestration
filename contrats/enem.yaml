@@ -1,0 +1,250 @@
+# Contrat de données de l'ENE-M (Enquête Nationale sur l'Emploi, volet ménages).
+#
+# Lu par le package générique anstat.io (R) / anstat_io (Python). Il décrit où se
+# trouve chaque jeu de données de l'ENE-M dans MinIO, qui le produit et quelles
+# variables l'identifient. Il reprend les contrats Python de ene_medallion_io
+# (apurement_contract.py, weights_contract.py, tabulation_contract.py,
+# precision_contract.py), vérifiés contre le contenu de MinIO au 3 novembre 2026.
+#
+# Les clés changent de nom entre étapes : l'apurement garde les noms de Survey
+# Solutions (interview__key, membres__id) ; la pondération les met en minuscules
+# avec un seul tiret bas (interview_key, membres_id) et ajoute INDKEY.
+#
+# Variables utilisables dans les chemins :
+#   trimestre : {projet} {periode} (T1_2026) {q} (1) {annee} (2026) {aa} (26)
+#   annee     : {projet} {periode} (2025) {annee} {aa}
+projet: enem
+version_contrat: 1
+description: Enquête Nationale sur l'Emploi, volet ménages (ENE-M), ANStat.
+
+couches: [staging, bronze, silver, gold, officiel]
+
+periodes:
+  trimestre:
+    motif: "T(?<q>[1-4])_(?<annee>[0-9]{4})"
+    prefixe: "{projet}/{periode}"
+  annee:
+    motif: "(?<annee>[0-9]{4})"
+    prefixe: "{projet}/annual/{periode}"
+
+jeux:
+
+  # --- staging : données reçues, jamais modifiées ---------------------------------
+  export_menage:
+    couche: staging
+    periodicite: trimestre
+    chemin: "brutes/ENEM_T{q}{annee}.dta"
+    cles: [interview__key]
+    producteur: collecte (Survey Solutions)
+    description: Export ménage de Survey Solutions (ENE_MENAGE_EXPORT peut le renommer).
+  export_membres:
+    couche: staging
+    periodicite: trimestre
+    chemin: "brutes/membres.dta"
+    cles: [interview__key, membres__id]
+    producteur: collecte (Survey Solutions)
+  export_brut:
+    couche: staging
+    periodicite: trimestre
+    type: dossier
+    chemin: "brutes/"
+    producteur: collecte (Survey Solutions)
+    description: Tout l'export, y compris le dénombrement (propriété de la pondération).
+  denombrement:
+    couche: staging
+    periodicite: trimestre
+    type: dossier
+    chemin: "brutes/denombrement/"
+    producteur: collecte (dénombrement)
+  denombrement_maj:
+    couche: staging
+    periodicite: trimestre
+    type: dossier
+    chemin: "brutes/denombrement_update/"
+    optionnel: true
+    producteur: collecte (dénombrement)
+  codification:
+    couche: staging
+    periodicite: trimestre
+    type: dossier
+    chemin: "codification/"
+    producteur: codification (classeurs CITP/CIAP du trimestre)
+  population_trimestre:
+    couche: staging
+    periodicite: trimestre
+    chemin: "population/POP_LFS_BY_REGION_SEX_2AGEGR_{annee}_T{q}.xlsx"
+    producteur: projections de population
+
+  # --- staging : références, sans périodicité -------------------------------------
+  rgph_zd:
+    couche: staging
+    prefixe: "{projet}/references"
+    chemin: "rgph2021/nb_men_indivs_ZD.dta"
+  rgph_region_milieu:
+    couche: staging
+    prefixe: "{projet}/references"
+    chemin: "rgph2021/nb_men_reg_milieu.dta"
+  rgph_indiv:
+    couche: staging
+    prefixe: "{projet}/references"
+    chemin: "rgph2021/nb_men_indiv_RP.dta"
+  reinterrogation:
+    couche: staging
+    prefixe: "{projet}/references"
+    chemin: "organisation/quarter_resurvey.xlsx"
+  matrice_trimestre:
+    couche: staging
+    prefixe: "{projet}/references"
+    chemin: "organisation/Fichier_Matrice_Trimestre.xlsx"
+  population_projections:
+    couche: staging
+    prefixe: "{projet}/references"
+    chemin: "population/ANStat_Trimestre.xlsx"
+
+  # --- bronze : sections standardisées ---------------------------------------------
+  sections_menage_bronze:
+    couche: bronze
+    periodicite: trimestre
+    type: dossier
+    chemin: "menage/"
+    producteur: apurement
+  sections_individu_bronze:
+    couche: bronze
+    periodicite: trimestre
+    type: dossier
+    chemin: "individu/"
+    producteur: apurement
+
+  # --- silver : données apurées, partagées -----------------------------------------
+  menage:
+    couche: silver
+    periodicite: trimestre
+    chemin: "menage/menage_{periode}.dta"
+    cles: [interview__key]
+    producteur: apurement
+  individu:
+    couche: silver
+    periodicite: trimestre
+    chemin: "individu/individu_{periode}.dta"
+    cles: [interview__key, membres__id]
+    producteur: apurement
+  rosters:
+    couche: silver
+    periodicite: trimestre
+    type: dossier
+    chemin: "individu/rosters/"
+    producteur: apurement
+  sections_menage:
+    couche: silver
+    periodicite: trimestre
+    type: dossier
+    chemin: "menage/standard/"
+    producteur: apurement
+  sections_individu:
+    couche: silver
+    periodicite: trimestre
+    type: dossier
+    chemin: "individu/standard/"
+    producteur: apurement
+  rapports_apurement:
+    couche: silver
+    periodicite: trimestre
+    type: dossier
+    chemin: "quality_reports/apurement_errors/"
+    producteur: apurement
+  poids_base:
+    couche: silver
+    periodicite: trimestre
+    chemin: "poids/base_weights/base_weights_{periode}.dta"
+    producteur: pondération
+  poids_menage_base:
+    couche: silver
+    periodicite: trimestre
+    chemin: "poids/base_weights/menage_{periode}.dta"
+    cles: [interview_key]
+    producteur: pondération
+  poids_individu_base:
+    couche: silver
+    periodicite: trimestre
+    chemin: "poids/base_weights/individu_{periode}.dta"
+    producteur: pondération
+  poids_cales:
+    couche: silver
+    periodicite: trimestre
+    chemin: "poids/calibrated_weights/individu_{periode}_CAL.dta"
+    cles: [INDKEY]
+    producteur: pondération
+  plan_calage:
+    couche: silver
+    periodicite: trimestre
+    chemin: "poids/calibration_design/180X_1D/LFS_CALIBRATION_{annee}_T{q}_180X_1D_IMAGE.RData"
+    producteur: pondération
+  poids_annuels_silver:
+    couche: silver
+    periodicite: annee
+    chemin: "poids/LFS_WEIGHTS_{annee}.parquet"
+    producteur: pondération
+
+  # --- gold : bases pondérées, bases d'indicateurs, indicateurs, précision -----------
+  base_ponderee_individu:
+    couche: gold
+    periodicite: trimestre
+    chemin: "base_ponderee/individu_{periode}_CAL.dta"
+    cles: [INDKEY]
+    producteur: pondération
+  base_ponderee_menage:
+    couche: gold
+    periodicite: trimestre
+    chemin: "base_ponderee/menage_{periode}.dta"
+    cles: [interview_key]
+    producteur: pondération
+  traite:
+    couche: gold
+    periodicite: trimestre
+    chemin: "base_indicateurs/Traite_{aa}T{q}.dta"
+    producteur: tabulation
+    description: Base d'indicateurs du trimestre seul (lue par la pondération du trimestre suivant).
+  base_travail:
+    couche: gold
+    periodicite: trimestre
+    chemin: "base_indicateurs/Base_Travail_BT_vf_{aa}T{q}.dta"
+    producteur: tabulation
+    description: Base empilée de tous les trimestres depuis T2_2024.
+  tableaux_indicateurs:
+    couche: gold
+    periodicite: trimestre
+    chemin: "indicateurs/Tableaux_Indicateurs_ENEM.xlsx"
+    producteur: tabulation
+  precision:
+    couche: gold
+    periodicite: trimestre
+    chemin: "precision/precision_{periode}.parquet"
+    producteur: précision
+  precision_qualite:
+    couche: gold
+    periodicite: trimestre
+    chemin: "precision/quality_{periode}.parquet"
+    producteur: précision
+  poids_annuels:
+    couche: gold
+    periodicite: annee
+    chemin: "base_ponderee/LFS_WEIGHTS_{annee}.parquet"
+    producteur: pondération
+  base_precision_annuelle:
+    couche: gold
+    periodicite: annee
+    chemin: "base_indicateurs/base_indicateurs_precision_{annee}.parquet"
+    producteur: tabulation
+  precision_annuelle:
+    couche: gold
+    periodicite: annee
+    chemin: "precision/precision_{annee}.parquet"
+    producteur: précision
+
+  # --- officiel : produits certifiés, immuables (couche à créer) --------------------
+  bulletin:
+    couche: officiel
+    periodicite: trimestre
+    type: dossier
+    chemin: "bulletin/"
+    producteur: publication

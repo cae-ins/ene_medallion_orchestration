@@ -1,0 +1,2 @@
+# Dépendances de ene_medallion_io (Python >= 3.10)
+boto3

@@ -142,6 +142,16 @@ class PipelineContractTests(unittest.TestCase):
                         "LFS_WEIGHTS_2025.dta"
                     ),
                 ),
+                (
+                    "LFS_WEIGHTS_2025_quality.csv",
+                    "silver",
+                    "enem/annual/2025/poids/LFS_WEIGHTS_2025_quality.csv",
+                ),
+                (
+                    "LFS_WEIGHTS_2025_manifest.json",
+                    "silver",
+                    "enem/annual/2025/poids/LFS_WEIGHTS_2025_manifest.json",
+                ),
             ],
         )
 
@@ -253,7 +263,7 @@ class PipelineContractTests(unittest.TestCase):
 
     def test_indicator_preparation_downloads_weighted_bases(self):
         module = load_numbered_script("05_download_tabulation_inputs.py")
-        download_prefix = Mock(return_value=[])
+        download_file = Mock(return_value=Path("fichier"))
         argv = [
             "05_download_tabulation_inputs.py",
             "--quarter",
@@ -263,20 +273,25 @@ class PipelineContractTests(unittest.TestCase):
         ]
         with (
             patch.object(module, "connect_from_args", return_value=object()),
-            patch.object(module, "download_prefix", download_prefix),
+            patch.object(module, "download_file", download_file),
             patch.object(sys, "argv", argv),
         ):
             module.main()
 
+        downloaded_keys = [call.args[2] for call in download_file.call_args_list]
         self.assertEqual(
-            download_prefix.call_args.args[2],
-            f"enem/T1_2026/{GOLD_WEIGHTED_BASE}",
+            downloaded_keys,
+            [
+                f"enem/T1_2026/{GOLD_WEIGHTED_BASE}/individu_T1_2026_CAL.dta",
+                f"enem/T1_2026/{GOLD_WEIGHTED_BASE}/menage_T1_2026.dta",
+                f"enem/T4_2025/{GOLD_INDICATOR_BASE}/Base_Travail_BT_vf_25T4.dta",
+            ],
         )
 
     def test_precision_reads_indicator_base_and_writes_precision(self):
         download_module = load_numbered_script("08_download_precision_inputs.py")
         upload_module = load_numbered_script("09_upload_precision_outputs.py")
-        download_prefix = Mock(return_value=[])
+        download_file = Mock(return_value=Path("fichier"))
         upload_file = Mock(return_value={})
         fixture_base = str(REPO_ROOT / "tests" / "_fixture_base")
         download_argv = [
@@ -290,7 +305,7 @@ class PipelineContractTests(unittest.TestCase):
         ]
         with (
             patch.object(download_module, "connect_from_args", return_value=object()),
-            patch.object(download_module, "download_prefix", download_prefix),
+            patch.object(download_module, "download_file", download_file),
             patch.object(sys, "argv", download_argv),
         ):
             download_module.main()
@@ -319,12 +334,15 @@ class PipelineContractTests(unittest.TestCase):
         ):
             upload_module.main()
 
-        download_prefixes = [call.args[2] for call in download_prefix.call_args_list]
+        downloaded_keys = [call.args[2] for call in download_file.call_args_list]
         self.assertEqual(
-            download_prefixes,
+            downloaded_keys,
             [
-                f"enem/T1_2026/{GOLD_INDICATOR_BASE}/asof=2026-06-26",
-                "enem/T1_2026/poids/calibration_design/180X_1D",
+                f"enem/T1_2026/{GOLD_INDICATOR_BASE}/asof=2026-06-26/Traite_26T1.dta",
+                (
+                    "enem/T1_2026/poids/calibration_design/180X_1D/"
+                    "LFS_CALIBRATION_2026_T1_180X_1D_IMAGE.RData"
+                ),
             ],
         )
         uploaded_keys = [call.args[3] for call in upload_file.call_args_list]
@@ -339,7 +357,7 @@ class PipelineContractTests(unittest.TestCase):
 
     def test_annual_precision_downloads_base_and_four_quarterly_designs(self):
         module = load_numbered_script("08_download_precision_inputs.py")
-        download_prefix = Mock(return_value=[])
+        download_file = Mock(return_value=Path("fichier"))
         argv = [
             "08_download_precision_inputs.py",
             "--period",
@@ -351,23 +369,26 @@ class PipelineContractTests(unittest.TestCase):
         ]
         with (
             patch.object(module, "connect_from_args", return_value=object()),
-            patch.object(module, "download_prefix", download_prefix),
+            patch.object(module, "download_file", download_file),
             patch.object(sys, "argv", argv),
         ):
             module.main()
 
-        self.assertEqual(download_prefix.call_count, 5)
-        downloaded_prefixes = [
-            call.args[2] for call in download_prefix.call_args_list
-        ]
+        downloaded_keys = [call.args[2] for call in download_file.call_args_list]
         self.assertEqual(
-            downloaded_prefixes,
+            downloaded_keys,
             [
-                f"enem/annual/2025/{GOLD_INDICATOR_BASE}",
-                "enem/T1_2025/poids/calibration_design/180X_1D",
-                "enem/T2_2025/poids/calibration_design/180X_1D",
-                "enem/T3_2025/poids/calibration_design/180X_1D",
-                "enem/T4_2025/poids/calibration_design/180X_1D",
+                (
+                    f"enem/annual/2025/{GOLD_INDICATOR_BASE}/"
+                    "base_indicateurs_precision_2025.parquet"
+                ),
+            ]
+            + [
+                (
+                    f"enem/T{q}_2025/poids/calibration_design/180X_1D/"
+                    f"LFS_CALIBRATION_2025_T{q}_180X_1D_IMAGE.RData"
+                )
+                for q in range(1, 5)
             ],
         )
 
